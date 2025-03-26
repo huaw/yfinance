@@ -43,15 +43,24 @@ for rowNum in range(2, maxrow + 1):  # Added +1 to include the last row
         if not ticker_symbol:  # Skip empty rows
             continue
             
+        # Format ticker symbol: replace / with - and ensure uppercase
+        ticker_symbol = ticker_symbol.replace('/', '-').upper()
         print(f"Processing ticker: {ticker_symbol}")  # Added for progress tracking
         
         # Get ticker info
-        ticker = yf.Ticker(ticker_symbol)
-        website = ticker.info.get("website", "N/A")  # Use N/A if website not found
-        longBusinessSummary =ticker.info.get("longBusinessSummary", "N/A")
-        fullTimeEmployees= ticker.info.get("fullTimeEmployees", "N/A")
+        try:
+            ticker = yf.Ticker(ticker_symbol)
+            info = ticker.info 
+        except Exception as e:
+            print(f"Error fetching data for {ticker_symbol}: {e}")
+            continue
 
-        # Update website in column 6
+        # Get the info from the ticker
+        website = info.get("website", "N/A")  # Use N/A if website not found
+        longBusinessSummary = info.get("longBusinessSummary", "N/A")
+        fullTimeEmployees= info.get("fullTimeEmployees", "N/A")
+
+        # Update website in columns needed  
         sheet.cell(row=rowNum, column=6).value = website
         sheet.cell(row=rowNum, column=8).value = longBusinessSummary
         sheet.cell(row=rowNum, column=10).value = fullTimeEmployees
@@ -63,6 +72,7 @@ for rowNum in range(2, maxrow + 1):  # Added +1 to include the last row
                 break  # Stop processing if save fails
     except Exception as e:
         print(f"Error processing row {rowNum}, ticker: {ticker_symbol}. Error: {e}")
+        save_workbook(workbook, file_path)
         break
 
 # Final save for remaining records
@@ -70,3 +80,4 @@ if records_processed % 100 != 0:
     save_workbook(workbook, file_path)
 
 workbook.close()
+print("Screener updated successfully!")
